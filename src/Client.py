@@ -18,7 +18,6 @@ class Client:
         self.bytesToSend = str.encode(msgFromClient)
 
     def LookForServer(self):
-        # serverAddressPort = ("127.0.0.1", 20001)
 
         # Create a UDP socket at client side
         timeout = time.time() + 10
@@ -48,7 +47,7 @@ class Client:
 
     def createTcpConnection(self, offer):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((socket.gethostname(), self.serverPort))
+        s.connect((self.serverIP, self.serverPort))
         # print('socket.gethostname(): ', socket.gethostname())
         # print('self.serverPort: ', self.serverPort)
 

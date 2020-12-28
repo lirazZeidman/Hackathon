@@ -86,7 +86,7 @@ class Server:
         UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
         # Bind to address and ip
-        UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
+        UDPServerSocket.bind(('', self.BroadcastUdpPort))
         print(f'Server started, listening on IP address {self.ServerIp}')
 
         # Send offers

@@ -54,29 +54,22 @@ class Server:
         UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         # UDPServerSocket.bind((self.ServerIp, self.TcpPort))
         UDPServerSocket.bind(('', self.TcpPort))
-
         while True:
             if time.time() > timeout:
                 break
             bytesAddressPair = UDPServerSocket.recvfrom(self.bufferSize)
-
             message = bytesAddressPair[0]
             address = bytesAddressPair[1]
-
             request = struct.unpack('IbH', message)
             if (request[0], request[1]) == (4276993775, 2):
                 TCPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 TCPServerSocket.bind((self.ServerIp, request[2]))
                 TCPServerSocket.listen(1)
-
                 conn, address = TCPServerSocket.accept()
-
             clientMsg = "Message from Client:{}".format(message)
             clientIP = "Client IP Address:{}".format(address)
-
             print(clientMsg)
             print(clientIP)
-
             # Sending a reply to client
             # UDPServerSocket.sendto(self.bytesToSend, address)
         """
@@ -86,7 +79,7 @@ class Server:
         UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
         # Bind to address and ip
-        UDPServerSocket.bind(('', self.BroadcastUdpPort))
+        UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
         print(f'Server started, listening on IP address {self.ServerIp}')
 
         # Send offers

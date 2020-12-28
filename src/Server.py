@@ -24,6 +24,9 @@ class Server:
             dest = ('<broadcast>', self.BroadcastUdpPort)
             UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             print('sends packet... ')  # Todo: delete that print
+            print(f'udpPort: {self.BroadcastUdpPort}. tcpPort: {self.TcpPort}')
+            print(f'ServerIp: {self.ServerIp}')
+
             UDPServerSocket.sendto(msg, dest)
             counter += 1
             time.sleep(1)

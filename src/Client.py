@@ -1,37 +1,33 @@
-from socket import *
-from keyboard import *
+import socket
 
+HEADERSIZE = 7
 
-class Client:
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print('Client started, listening for offer requests...')
+s.connect((socket.gethostname(), 1241))
 
-    def __init__(self, port = 13117):
-        self.ip = gethostbyname(gethostname())
-        self.port = port
+while True:
+    full_msg = ''
+    new_msg = True
+    while True:
+        msg = s.recv(100)
+        if new_msg:
+            # print("new msg len:", msg[:HEADERSIZE])
+            # print(f"Received offer from {}, attempting to connect...")
+            # msglen = int(msg[:HEADERSIZE])
+            new_msg = False
 
+        # print(f"full message length: {msglen}")
 
-    def UDPClient(self):
-        serverName = 'hostname'
-        serverPort = self.port
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
-        message = input('Hello im Client')
-        clientSocket.sendto(message, (serverName, serverPort))
-        modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
-        print(modifiedMessage)
-        clientSocket.close()
+        # full_msg += msg.decode("utf-8")
 
-    def TCPClient(self):
-        serverName = 'servername'
-        serverPort = self.port
-        clientSocket = socket(AF_INET, SOCK_STREAM)
-        message = input('Hello im Client')
-        clientSocket.connect((serverName, serverPort))
-        sentence = input('name of my group is QueenGambit')
-        clientSocket.send(sentence)
-        modifiedSentence = clientSocket.recv(1024)
-        print('from server: ', modifiedSentence)
-        clientSocket.close()
+        # print(len(full_msg))
 
+        # if len(full_msg) - HEADERSIZE == msglen:
 
-    def connetcingToServer(self):
-        pass
-
+        print(f"Received offer from {msg.decode('utf-8')}, attempting to connect...")
+        # print(full_msg[HEADERSIZE:])
+        new_msg = True
+        # full_msg = ''
+    if msvcrt.kbhit() and msvcrt.getch() == chr(27):
+        exit()

@@ -22,7 +22,7 @@ class Client:
     def TCPClient(self):
         serverName = 'servername'
         serverPort = self.port
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
+        clientSocket = socket(AF_INET, SOCK_STREAM)
         message = input('Hello im Client')
         clientSocket.connect((serverName, serverPort))
         sentence = input('name of my group is QueenGambit')

@@ -21,7 +21,7 @@ class Server:
 
     def TCPServer(self):
         serverPort = self.port
-        serverSocket = socket(AF_INET, SOCK_DGRAM)
+        serverSocket = socket(AF_INET, SOCK_STREAM)
         serverSocket.bind(('', serverPort))
         serverSocket.listen(1)
         print("the server ready to recieve")

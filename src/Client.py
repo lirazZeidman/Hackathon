@@ -7,5 +7,11 @@ class Client:
         self.ip = socket.gethostbyname(socket.gethostname())
         self.port = port
 
+
     def lookingForServer(self):
         pass
+
+
+    def connetcingToServer(self):
+        pass
+

@@ -1,168 +1,103 @@
-# import socket
-#
-# HEADERSIZE = 7
-#
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.bind((socket.gethostname(), 1234))
-# s.listen(5)  # size of queue = 200
-#
-# while True:
-#     # now our endpoint knows about the OTHER endpoint.
-#     clientsocket = None
-#     while clientsocket is None:
-#         clientsocket, address = s.accept()
-#         if clientsocket is None:
-#             time.sleep(1)
-#         else:
-#             print(f"Connection from {address} has been established.")
-#
-#     msg = "Welcome to the server!"
-#     msg = f'{len(msg):<{HEADERSIZE}}' + msg
-#
-#     clientsocket.send(bytes(msg, "utf-8"))
-#     # clientsocket.close()
-
-#
-# import socket
-# import msvcrt
-# import select
-# import time
-#
-# HEADERSIZE = 7
-#
-# IP="123.0.0.1"
-# Prot=1234
-#
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.bind((socket.gethostname(), 1241))
-# s.listen(5)  # size of queue = 5
-#
-# print(f"Server started, listening on IP address {socket.gethostbyname(socket.gethostname())}.")
-#
-# while True:
-#     # now our endpoint knows about the OTHER endpoint.
-#     clientsocket, address = s.accept()  # address is equal to: (dest-ip, dest-port)
-#     print(f"Connection from {address} has been established.")
-#
-#     msg = f"{socket.gethostbyname(socket.gethostname())}"
-#     # msg = f"{len(msg):<{HEADERSIZE}}" + msg
-#     clientsocket.send(bytes(msg,'utf-8'))
-#
-#     if msvcrt.kbhit() and msvcrt.getch() == chr(27):
-#         clientsocket.close()
-#         break
-#     # while True:
-#     # msg = f"the time is: {time.time()}"
-#     # msg = f"{len(msg):<{HEADERSIZE}}" + msg
-#     # clientsocket.send(bytes(msg, "utf-8"))
-#     # time.sleep(5)
-
-
-# ********************************************************************************************
 import socket
-import msvcrt
-import select
+from threading import Thread
+import struct
 import time
 
-HEADERSIZE = 7
 
-IP = socket.gethostname()
-Port = 1234
+class Server:
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    def __init__(self):
+        self.ServerIp = socket.gethostbyname(socket.gethostname())
+        self.BroadcastUdpPort = 13117
+        self.TcpPort = 50000
+        self.bufferSize = 1024
 
-server_socket.bind((IP, Port))
-server_socket.listen(5)  # size of queue = 5
+        msgFromServer = "Hello UDP Client"
+        self.bytesToSend = str.encode(msgFromServer)
+        self.client = {}
 
-sockets_list = [server_socket]
-Clients = {}
+    def sendOffers(self, UDPServerSocket):
+        counter = 0
+        while True:
+            msg = struct.pack('IbH', 0xfeedbeef, 0x2, self.TcpPort)
+            # print(struct.unpack('IbH', msg))
+            dest = ('<broadcast>', self.BroadcastUdpPort)
+            UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            print('sends packet... ')  # Todo: delete that print
+            UDPServerSocket.sendto(msg, dest)
+            counter += 1
+            time.sleep(1)
+            if counter == 10:
+                break
+
+    def replyToMessages(self):
+
+        # socket.accept()
+        # Accept a connection. The socket must be bound to an address and listening for connections.
+        # The return value is a pair (conn, address) where conn is a new socket object usable to send and receive data on the connection,
+        # and address is the address bound to the socket on the other end of the connection.
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((socket.gethostname(), self.TcpPort))
+        s.listen(5)
+
+        while True:
+            clientsocket, address = s.accept()
+            # now our endpoint knows about the OTHER endpoint.
+            print(f"Connection from {address} has been established.")
+            clientsocket.send(bytes("Hey there!!!", "utf-8"))
+            clientsocket.close()
 
 
-def receive_message(client_socket):
-    try:
-        message_header = client_socket.recv(HEADERSIZE)  # HEADERSIZE
-        if not len(message_header):
-            return False
-        message_length = int(message_header.decode("utf-8").strip())
-        return {"header": message_header, "data": client_socket.recv(message_length)}
+        """
+        timeout = time.time() + 10
+        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        # UDPServerSocket.bind((self.ServerIp, self.TcpPort))
+        UDPServerSocket.bind(('', self.TcpPort))
 
-    except:
-        return False
+        while True:
+            if time.time() > timeout:
+                break
+            bytesAddressPair = UDPServerSocket.recvfrom(self.bufferSize)
+
+            message = bytesAddressPair[0]
+            address = bytesAddressPair[1]
+
+            request = struct.unpack('IbH', message)
+            if (request[0], request[1]) == (4276993775, 2):
+                TCPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                TCPServerSocket.bind((self.ServerIp, request[2]))
+                TCPServerSocket.listen(1)
+
+                conn, address = TCPServerSocket.accept()
+
+            clientMsg = "Message from Client:{}".format(message)
+            clientIP = "Client IP Address:{}".format(address)
+
+            print(clientMsg)
+            print(clientIP)
+
+            # Sending a reply to client
+            # UDPServerSocket.sendto(self.bytesToSend, address)
+        """
+
+    def createUDPSocket(self):
+        # Create a datagram socket
+        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+
+        # Bind to address and ip
+        UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
+        print(f'Server started, listening on IP address {self.ServerIp}')
+
+        # Send offers
+        offersThread = Thread(target=self.sendOffers, args=(UDPServerSocket,))
+        offersThread.start()
+
+        # Listen for incoming datagrams
+        replyThread = Thread(target=self.replyToMessages, args=())
+        replyThread.start()
 
 
-print(f"Server started, listening on IP address {socket.gethostbyname(socket.gethostname())}.")
-
-while True:
-    read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
-
-    for notified_socket in read_sockets:
-        if notified_socket == server_socket:
-            client_socket, client_address = server_socket.accept()
-
-            user = receive_message(client_socket)
-            if user is False:
-                continue
-
-            sockets_list.append(client_socket)
-
-            Clients[client_socket] = user
-
-            print(
-                f"Accepted new info from {client_address[0]}:{client_address[1]} user name : {user['data'].decode('utf-8')}")
-
-        else:
-
-            # Receive message
-            message = receive_message(notified_socket)
-
-            # If False, client disconnected, cleanup
-            if message is False:
-                print('Closed connection from: {}'.format(Clients[notified_socket]['data'].decode('utf-8')))
-
-                # Remove from list for socket.socket()
-                sockets_list.remove(notified_socket)
-
-                # Remove from our list of users
-                del Clients[notified_socket]
-
-                continue
-
-            # Get user by notified socket, so we will know who sent the message
-            user = Clients[notified_socket]
-
-            print(f'Received message from {user["data"].decode("utf-8")}: {message["data"].decode("utf-8")}')
-
-            # Iterate over connected clients and broadcast message
-            for client_socket in Clients:
-
-                # But don't sent it to sender
-                if client_socket != notified_socket:
-                    # Send user and message (both with their headers)
-                    # We are reusing here message header sent by sender, and saved username header send by user when he connected
-                    client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-
-            # It's not really necessary to have this, but will handle some socket exceptions just in case
-        for notified_socket in exception_sockets:
-            # Remove from list for socket.socket()
-            sockets_list.remove(notified_socket)
-
-            # Remove from our list of users
-            del Clients[notified_socket]
-
-    # # now our endpoint knows about the OTHER endpoint.
-    # clientsocket, address = s.accept()  # address is equal to: (dest-ip, dest-port)
-    # print(f"Connection from {address} has been established.")
-    #
-    # msg = f"{socket.gethostbyname(socket.gethostname())}"
-    # # msg = f"{len(msg):<{HEADERSIZE}}" + msg
-    # clientsocket.send(bytes(msg, 'utf-8'))
-    #
-    # if msvcrt.kbhit() and msvcrt.getch() == chr(27):
-    #     clientsocket.close()
-    #     break
-    # # while True:
-    # # msg = f"the time is: {time.time()}"
-    # # msg = f"{len(msg):<{HEADERSIZE}}" + msg
-    # # clientsocket.send(bytes(msg, "utf-8"))
-    # # time.sleep(5)
+if __name__ == '__main__':
+    server = Server()
+    server.createUDPSocket()

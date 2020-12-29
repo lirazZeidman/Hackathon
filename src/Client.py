@@ -47,10 +47,10 @@ class Client:
 
     def createTcpConnection(self, offer):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort)
-        s.settimeout(10)  # TODO: delete this later
+        # print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort) #todo delete that print
+        # s.settimeout(10)  # TODO: delete this later
         s.connect((self.serverIP, self.serverPort))
-        s.send(bytes(f'motha fucker this is {self.teamName}', 'utf-8'))
+        # s.send(bytes(f'motha fucker this is {self.teamName}', 'utf-8'))
         # print('socket.gethostname(): ', socket.gethostname())
         # print('self.serverPort: ', self.serverPort)
 
@@ -65,7 +65,7 @@ class Client:
                     print(msg)
 
         except socket.timeout:
-            print('tcp-connection timeout has reached')
+            print('tcp-connection timeout has reached') #todo delete that print
             s.close()
 
         # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

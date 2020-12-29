@@ -1,7 +1,6 @@
 import socket
 import struct
 import time
-from threading import Thread
 
 
 class Client:
@@ -36,19 +35,15 @@ class Client:
                 if (offer[0], offer[1]) == (4276993775, 2):
                     self.serverPort = offer[2]
                     print(f'Received offer from {self.serverIP}, attempting to connect...')
-                    self.createTcpConnection(offer)
+                    self.createTcpConnection()
                     break
             except socket.timeout:  # todo delete the except
                 print('timeout reached, LookForServer')
 
-    def createTcpConnection(self, offer):
+    def createTcpConnection(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort) #todo delete that print
-        # s.settimeout(10)  # TODO: delete this later
         s.connect((self.serverIP, self.serverPort))
         s.send(bytes(f'{self.teamName}', 'utf-8'))
-        # print('socket.gethostname(): ', socket.gethostname())
-        # print('self.serverPort: ', self.serverPort)
 
         try:
             while True:

@@ -5,7 +5,8 @@ import time
 
 class Client:
     def __init__(self, teamName):
-        self.clientIP = socket.gethostbyname(socket.gethostname())
+        # self.clientIP = socket.gethostbyname(socket.gethostname())
+        self.clientIP = ""
         self.clientUdpPort = 13117
         self.teamName = teamName + '\n'
         self.bufferSize = 1024
@@ -24,6 +25,7 @@ class Client:
         timeout = time.time() + 10
         while True:
             UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            UDPClientSocket.settimeout(10)
             UDPClientSocket.bind(('', self.clientUdpPort))
             offer, (self.serverIP, server_port) = UDPClientSocket.recvfrom(1024)
 

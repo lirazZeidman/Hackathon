@@ -46,17 +46,20 @@ class Server:
         s.bind(('0.0.0.0', self.TcpPort))
         s.listen(5)
 
+        clientsocket, address = s.accept()
+        clientsocket.settimeout(10)
+        print('address: ', address)
+        # now our endpoint knows about the OTHER endpoint.
+        self.client[address] = clientsocket  # dict contains: (ip,port)->TCP connection
+        print(f"Connection from {address} has been established.")
+
         stopped = False
         while not stopped:
             try:
-                clientsocket, address = s.accept()
-                # now our endpoint knows about the OTHER endpoint.
+                data = clientsocket.recvfrom(self.bufferSize)
+                print("received data: ", data)
+                clientsocket.send(bytes("Hey there!!! its me, the server :)", "utf-8"))
 
-                print(f"Connection from {address} has been established.")
-
-                clientsocket.send(bytes("Hey there!!!", "utf-8"))
-
-                self.client[address] = clientsocket  # dict contains: (ip,port)->TCP connection
             except socket.timeout:
                 print('time out reached, replyToMessages')
                 stopped = True

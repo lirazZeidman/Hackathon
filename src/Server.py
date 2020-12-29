@@ -7,8 +7,7 @@ import time
 class Server:
 
     def __init__(self):
-        # self.ServerIp = socket.gethostbyname(socket.gethostname())
-        self.ServerIp = ""
+        self.ServerIp = socket.gethostbyname(socket.gethostname())
         self.BroadcastUdpPort = 13117
         self.TcpPort = 50000
         self.bufferSize = 1024
@@ -17,14 +16,85 @@ class Server:
         self.bytesToSend = str.encode(msgFromServer)
         self.client = {}
 
+    def sendOffers(self, UDPServerSocket):
+        counter = 0
+        while True:
+            if counter < 10:
+                msg = struct.pack('IbH', 0xfeedbeef, 0x2, self.TcpPort)
+                # print(struct.unpack('IbH', msg))
+                dest = ('<broadcast>', self.BroadcastUdpPort)
+                UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                print('sends packet... ')  # Todo: delete that print
+                UDPServerSocket.sendto(msg, dest)
+                counter += 1
+                time.sleep(1)
+            else:
+                break
+
+    def replyToMessages(self):
+        timeout = time.time() + 10
+
+        # socket.accept()
+        # Accept a connection. The socket must be bound to an address and listening for connections.
+        # The return value is a pair (conn, address) where conn is a new socket object usable to send and receive data on the connection,
+        # and address is the address bound to the socket on the other end of the connection.
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.settimeout(10)
+        # s.bind((socket.gethostname(), self.TcpPort))
+        s.bind(('0.0.0.0', self.TcpPort))
+        s.listen(5)
+
+        stopped = False
+        while not stopped:
+            try:
+                clientsocket, address = s.accept()
+                # now our endpoint knows about the OTHER endpoint.
+
+                print(f"Connection from {address} has been established.")
+
+                clientsocket.send(bytes("Hey there!!!", "utf-8"))
+
+                self.client[address] = clientsocket  # dict contains: (ip,port)->TCP connection
+            except socket.timeout:
+                print('time out reached, replyToMessages')
+                stopped = True
+
+        # clientsocket.close()
+
+        """
+        timeout = time.time() + 10
+        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        # UDPServerSocket.bind((self.ServerIp, self.TcpPort))
+        UDPServerSocket.bind(('', self.TcpPort))
+        while True:
+            if time.time() > timeout:
+                break
+            bytesAddressPair = UDPServerSocket.recvfrom(self.bufferSize)
+            message = bytesAddressPair[0]
+            address = bytesAddressPair[1]
+            request = struct.unpack('IbH', message)
+            if (request[0], request[1]) == (4276993775, 2):
+                TCPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                TCPServerSocket.bind((self.ServerIp, request[2]))
+                TCPServerSocket.listen(1)
+                conn, address = TCPServerSocket.accept()
+            clientMsg = "Message from Client:{}".format(message)
+            clientIP = "Client IP Address:{}".format(address)
+            print(clientMsg)
+            print(clientIP)
+            # Sending a reply to client
+            # UDPServerSocket.sendto(self.bytesToSend, address)
+        """
+
     def createUDPSocket(self):
         # Create a datagram socket
-        UDPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        UDPServerSocket.settimeout(10)
 
+        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        # UDPServerSocket.settimeout(10)
         # Bind to address and ip
         UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
-
         print(f'Server started, listening on IP address {self.ServerIp}')
 
         # Send offers
@@ -35,48 +105,11 @@ class Server:
         replyThread = Thread(target=self.replyToMessages, args=())
         replyThread.start()
 
-    def sendOffers(self, UDPServerSocket):
-        counter = 0
-
-        while True:
-            msg = struct.pack('IbH', 0xfeedbeef, 0x2, self.TcpPort)
-            # print(struct.unpack('IbH', msg))
-            dest = ('<broadcast>', self.BroadcastUdpPort)
-            UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            print('sends packet... ')  # Todo: delete that print
-            UDPServerSocket.sendto(msg, dest)  # TODO: check if that what makes the problem between computers.
-            counter += 1
-            time.sleep(1)
-            if counter == 10:
-                break
-
-        UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 0)
-
-    def replyToMessages(self):
-
-        # socket.accept()
-        # Accept a connection. The socket must be bound to an address and listening for connections.
-        # The return value is a pair (conn, address) where conn is a new socket object usable to send and receive data on the connection,
-        # and address is the address bound to the socket on the other end of the connection.
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.ServerIp, self.TcpPort))
-        s.listen(64)
-
-        timeout = time.time() + 10
-        clientsocket = None
-        while True:
-
-            if s.accept() is not None:
-                clientsocket, address = s.accept()
-                # now our endpoint knows about the OTHER endpoint.
-                print(f"Connection from {address} has been established.")
-                clientsocket.send(bytes("Hey there!!!", "utf-8"))
-
-            if time.time() > timeout:
-                break
-        if clientsocket:
-            clientsocket.close()
+        # Wait for at most 10 seconds for the thread to complete.
+        offersThread.join(10)
+        replyThread.join(10)
+        # Always signal the event. Whether the thread has already finished or not,
+        # the result will be the same.
 
 
 if __name__ == '__main__':

@@ -3,8 +3,9 @@ import struct
 import time
 
 
+
 class Client:
-    def __init__(self, teamName):
+    def __init__(self, teamName ):
         self.clientIP = socket.gethostbyname(socket.gethostname())
         self.clientUdpPort = 13117
         self.teamName = teamName + '\n'
@@ -16,6 +17,7 @@ class Client:
 
         msgFromClient = "Hello UDP Server"
         self.bytesToSend = str.encode(msgFromClient)
+
 
     def LookForServer(self):
         # serverAddressPort = ("127.0.0.1", 20001)
@@ -43,7 +45,7 @@ class Client:
 
     def createTcpConnection(self, offer):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("clientIP - ",self.clientIP," serverIP - ",self.serverIP, " serverPort - ",self.serverPort)
+        print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort)
         s.settimeout(10)  # TODO: delete this later
         s.connect((self.serverIP, self.serverPort))
         s.send(bytes('motha fucker', 'utf-8'))
@@ -63,7 +65,6 @@ class Client:
         except socket.timeout:
             print('tcp-connection timeout has reached')
             s.close()
-
 
         # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # s.connect((self.serverIP, self.serverPort))

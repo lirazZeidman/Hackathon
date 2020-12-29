@@ -2,6 +2,8 @@ import socket
 from threading import Thread
 import struct
 import time
+import multiprocessing.pool as mpp
+from multiprocessing import Pool
 
 
 class Server:
@@ -18,6 +20,9 @@ class Server:
         self.group1 = {}
         self.group2 = {}
 
+        self.scoreGroup1 = {}
+        self.scoreGroup2 = {}
+
     def sendOffers(self, UDPServerSocket):
         counter = 0
         while True:
@@ -31,31 +36,6 @@ class Server:
                 time.sleep(1)
             else:
                 break
-
-        """
-        timeout = time.time() + 10
-        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        # UDPServerSocket.bind((self.ServerIp, self.TcpPort))
-        UDPServerSocket.bind(('', self.TcpPort))
-        while True:
-            if time.time() > timeout:
-                break
-            bytesAddressPair = UDPServerSocket.recvfrom(self.bufferSize)
-            message = bytesAddressPair[0]
-            address = bytesAddressPair[1]
-            request = struct.unpack('IbH', message)
-            if (request[0], request[1]) == (4276993775, 2):
-                TCPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                TCPServerSocket.bind((self.ServerIp, request[2]))
-                TCPServerSocket.listen(1)
-                conn, address = TCPServerSocket.accept()
-            clientMsg = "Message from Client:{}".format(message)
-            clientIP = "Client IP Address:{}".format(address)
-            print(clientMsg)
-            print(clientIP)
-            # Sending a reply to client
-            # UDPServerSocket.sendto(self.bytesToSend, address)
-        """
 
     """def replyToMessages(self):"""
     #   def replyToMessages(self):
@@ -166,6 +146,45 @@ class Server:
         replyThread.join(10)
         # Always signal the event. Whether the thread has already finished or not,
         # the result will be the same.
+
+        self.handleStartGame()
+
+    def handleStartGame(self):
+        print('multiprocessing.pool.ThreadPool')
+        p = Pool()
+        # results = p.map(self.handleGameThread(),self.clients.items())  # results - tup of the counted keyboard preses
+
+        timeoutOfGame = time.time() + 10
+        for addr, (conn, name) in self.clients.items():
+            if addr in self.group1.keys():
+                handleGameThread_1 = Thread(target=self.handleGameThread_1, args=(addr, conn, name, timeoutOfGame))
+                handleGameThread_1.start()
+            if addr in self.group2.keys():
+                handleGameThread_2 = Thread(target=self.handleGameThread_2, args=(addr, conn, name, timeoutOfGame))
+                handleGameThread_2.start()
+
+        Thread.join()
+        Score1 = sum(self.scoreGroup1.values())
+        Score2 = sum(self.scoreGroup2.values())
+        print("Score1: ", Score1, " Score2: ", Score2)
+
+    def handleGameThread_1(self, addr, conn, name, timeOutOfGame):
+        count = 0
+        while time.time() < timeOutOfGame:
+            char = conn.recv(1)
+            count += 1
+
+        self.scoreGroup1[addr] = count
+        print(f"addr: {addr}, name: {name}, count of press: {count}")
+
+    def handleGameThread_2(self, addr, conn, name, timeOutOfGame):
+        count = 0
+        while time.time() < timeOutOfGame:
+            char = conn.recv(1)
+            count += 1
+
+        self.scoreGroup2[addr] = count
+        print(f"addr: {addr}, name: {name}, count of press: {count}")
 
     def replyToMessages(self):
         for c in self.clients.values():

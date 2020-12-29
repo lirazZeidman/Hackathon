@@ -1,7 +1,7 @@
 import socket
 import struct
 import time
-
+import keyboard
 
 class Client:
     def __init__(self, teamName):
@@ -46,17 +46,22 @@ class Client:
         s.send(bytes(f'{self.teamName}', 'utf-8'))
 
         try:
-            while True:
-                # s.listen(5)
-                msg = s.recv(1024)
-                msg = msg.decode("utf-8")
-                if len(msg) > 0:
-                    print(msg)
+            msg = s.recv(1024)
+            msg = msg.decode("utf-8")
+            if len(msg) > 0:
+                print(msg)
+
 
         except socket.timeout:
             print('tcp-connection timeout has reached')  # todo delete that print
             s.close()
 
+        print("time to start the big game!")
+        self.gaming(s)
+
+    def gaming(self,ClientSocket):
+        try1 = keyboard.read_key(True)
+        ClientSocket.send(str.encode(try1))
 
 def startClients(name):
     client1 = Client(name)

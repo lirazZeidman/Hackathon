@@ -257,7 +257,7 @@ class Server:
                 conn.send(str.encode(' '))
                 conn.recv(20480)
             except:
-                self.clients2 = {}
+                self.clients = {}
                 continue
 
             results = str(i) + "   " + str(add) + "\n"

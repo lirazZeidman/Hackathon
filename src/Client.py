@@ -24,26 +24,21 @@ class Client:
         timeout = time.time() + 10
         while True:
             UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            UDPClientSocket.settimeout(10)
             UDPClientSocket.bind(('', self.clientUdpPort))
-            offer, (self.serverIP, server_port) = UDPClientSocket.recvfrom(1024)
 
-            # (b'\xef\xbe\xed\xfe\x02\x00P\xc3', ('192.168.56.1', 13117))
+            try:
+                offer, (self.serverIP, server_port) = UDPClientSocket.recvfrom(1024)
+                # (b'\xef\xbe\xed\xfe\x02\x00P\xc3', ('192.168.56.1', 13117))
+                offer = struct.unpack('IbH', offer)
 
-            # print('magic_cookie: ', offer)
-            # print('self.ServerIP: ', self.serverIP)
-            # print('serverPort: ', self.serverPort)
-
-            offer = struct.unpack('IbH', offer)
-
-            msg = f"Message from Server {offer}"
-            # print('msg: ', msg)
-            if (offer[0], offer[1]) == (4276993775, 2):
-                self.serverPort = offer[2]
-                print(f'Received offer from {self.serverIP}, attempting to connect...')
-                self.createTcpConnection(offer)
-                break
-            elif time.time() > timeout:
-                print('not good')
+                if (offer[0], offer[1]) == (4276993775, 2):
+                    self.serverPort = offer[2]
+                    print(f'Received offer from {self.serverIP}, attempting to connect...')
+                    self.createTcpConnection(offer)
+                    break
+            except socket.timeout:
+                print('timeout reached, LookForServer')
                 break
 
     def createTcpConnection(self, offer):

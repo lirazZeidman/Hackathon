@@ -194,7 +194,7 @@ class Server:
                 clientName = clientsocket.recvfrom(1024)[0].decode("utf-8")
                 self.clients[address] = (clientsocket, clientName)
                 # self.clients[address] = clientsocket  # dict contains: (ip,port)->TCP connection
-                sSocket.setblocking(1)  # prevents timeout
+                sSocket.setblocking(True)  # prevents timeout
 
                 # data = clientsocket.recvfrom(self.bufferSize) # i dont send nothing no more
 

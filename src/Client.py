@@ -3,10 +3,9 @@ import struct
 import time
 from threading import Thread
 
-PORTNUMBER = 13117
+
 class Client:
     def __init__(self, teamName):
-        global PORTNUMBER
         self.clientIP = socket.gethostbyname(socket.gethostname())
         self.clientUdpPort = 13117
         self.teamName = teamName
@@ -18,8 +17,6 @@ class Client:
 
         msgFromClient = "Hello UDP Server"
         self.bytesToSend = str.encode(msgFromClient)
-
-        # PORTNUMBER += 1
 
     def LookForServer(self):
         # serverAddressPort = ("127.0.0.1", 20001)
@@ -44,7 +41,6 @@ class Client:
             except socket.timeout:  # todo delete the except
                 print('timeout reached, LookForServer')
 
-
     def createTcpConnection(self, offer):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort) #todo delete that print
@@ -59,11 +55,11 @@ class Client:
                 # s.listen(5)
                 msg = s.recv(1024)
                 msg = msg.decode("utf-8")
-                if len(msg)>0:
+                if len(msg) > 0:
                     print(msg)
 
         except socket.timeout:
-            print('tcp-connection timeout has reached') #todo delete that print
+            print('tcp-connection timeout has reached')  # todo delete that print
             s.close()
 
 
@@ -73,6 +69,5 @@ def startClients(name):
 
 
 if __name__ == '__main__':
-    client = Client("QueenGambit")
+    client = Client("Rob0tSoF1A")
     client.LookForServer()
-

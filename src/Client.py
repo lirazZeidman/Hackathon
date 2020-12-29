@@ -1,13 +1,14 @@
 import socket
 import struct
 import time
+from threading import Thread
 
-
-
+PORTNUMBER = 13117
 class Client:
-    def __init__(self, teamName ):
+    def __init__(self, teamName):
+        global PORTNUMBER
         self.clientIP = socket.gethostbyname(socket.gethostname())
-        self.clientUdpPort = 13117
+        self.clientUdpPort = PORTNUMBER
         self.teamName = teamName + '\n'
         self.bufferSize = 1024
         self.serverIP = None
@@ -18,6 +19,7 @@ class Client:
         msgFromClient = "Hello UDP Server"
         self.bytesToSend = str.encode(msgFromClient)
 
+        PORTNUMBER += 1
 
     def LookForServer(self):
         # serverAddressPort = ("127.0.0.1", 20001)
@@ -48,7 +50,7 @@ class Client:
         print("clientIP - ", self.clientIP, " serverIP - ", self.serverIP, " serverPort - ", self.serverPort)
         s.settimeout(10)  # TODO: delete this later
         s.connect((self.serverIP, self.serverPort))
-        s.send(bytes('motha fucker', 'utf-8'))
+        s.send(bytes(f'motha fucker this is {self.teamName}', 'utf-8'))
         # print('socket.gethostname(): ', socket.gethostname())
         # print('self.serverPort: ', self.serverPort)
 
@@ -95,6 +97,20 @@ class Client:
         # print('address2: ', address2)
 
 
+def startClients(name):
+    client1 = Client(name)
+    client1.LookForServer()
+
+
 if __name__ == '__main__':
-    client = Client('QueenGambit')
+    client = Client("QueenGambit")
     client.LookForServer()
+
+
+    # replyMultiMessagesThread1 = Thread(target=startClients, args=("QueenGambit",))
+    # replyMultiMessagesThread2 = Thread(target=startClients, args=("robotSofia",))
+    # replyMultiMessagesThread1.start()
+    # replyMultiMessagesThread2.start()
+
+    # client = Client('QueenGambit')
+    # client.LookForServer()

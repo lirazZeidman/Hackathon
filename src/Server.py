@@ -185,24 +185,18 @@ class Server:
                 # binding socket
                 # s.bind((socket.gethostname(), self.TcpPort))
                 sSocket.bind(('0.0.0.0', self.TcpPort))
-                sSocket.listen(5)
+                sSocket.listen(1)
 
                 # connecting clients
                 clientsocket, address = sSocket.accept()
-                # print('socket name: ', clientsocket.getsockname()) # todo delete that print
-                # clientsocket.settimeout(10)  #  todo check if need - its setting timeout on the clients connection - remove ?
 
-                # todo get the names of the clients!!!
-                self.clients[address] = clientsocket
+                # todo get the names of the clients!!
+                clientName = clientsocket.recvfrom(1024)[0].decode("utf-8")
+                self.clients[address] = (clientsocket, clientName)
                 # self.clients[address] = clientsocket  # dict contains: (ip,port)->TCP connection
-                # print(f"Connection from {address} has been established.") # todo delete that print
                 sSocket.setblocking(1)  # prevents timeout
 
                 # data = clientsocket.recvfrom(self.bufferSize) # i dont send nothing no more
-                # print("received data: ", data)  #todo delete that print
-                # clientsocket.send(bytes("Hey there!!! its me, the server :)", "utf-8"))  # todo delete that packet send!!
-
-                # print("Connection has been established! from :", address) #todo delete that print
 
             except socket.timeout:  # todo check if to erase the type of the e - socket.timeout
                 # print('time out reached, replyToMessages') # todo delete that print
@@ -210,28 +204,27 @@ class Server:
 
     def printGroup1(self):
         g1 = ""
-        for add, conn in self.group1:
-            g1 += str(add) + "\n"
+        for add, (conn, name) in self.group1.items():
+            g1 += str(name) + "\n"
         return g1
 
     def printGroup2(self):
         g2 = ""
-        for add, conn in self.group2:
-            g2 += str(add) + "\n"
+        for add, (conn, name) in self.group2.items():
+            g2 += str(name) + "\n"
         return g2
 
     def handleGroupsDividing(self):
         for i, tup in enumerate(self.clients.items()):
-            add, conn = tup
+            add, (conn, name) = tup
             if len(self.clients) / 2 > i:
-                self.group1[add] = conn
+                self.group1[add] = (conn, name)
             else:
-                self.group2[add] = conn
+                self.group2[add] = (conn, name)
 
     def handleGameAnnouncement(self):
         for i, tup in enumerate(self.clients.items()):
-            add, conn = tup
-            add, conn = tup
+            add, (conn, name) = tup
             msg = f'Welcome to Keyboard Spamming Battle Royale.\n' \
                   f'Group 1:\n' \
                   f'==\n' \
@@ -281,8 +274,9 @@ class Server:
 if __name__ == '__main__':
     server = Server()
     server.createUDPSocket()
-    print("\nClients ->", server.clients)
+    # print("\nClients ->", server.clients)
     server.handleGroupsDividing()
-    print("\ngroup 1 ->", server.group1)
-    print("\ngroup 2 ->", server.group2)
+    # print("\ngroup 1 ->", server.group1)
+    # print("\ngroup 2 ->", server.group2)
+    # print()
     server.handleGameAnnouncement()

@@ -2,7 +2,7 @@ import socket
 import struct
 import keyboard
 import time
-from threading import Thread
+from StopableThread import StoppableThread
 
 
 class Client:
@@ -55,14 +55,17 @@ class Client:
                 print(msg)
 
         except socket.timeout:
-            print('tcp-connection timeout has reached')  # todo delete that print
             s.close()
 
         print("time to start the big game!")
-        gameingThread = Thread(target=self.gaming, args=(s,))
-        gameingThread.start()
-
-        gameingThread.join(10)
+        gamingThread = StoppableThread(target=self.gaming, args=(s,))
+        gamingThread.start()
+        # Thread.Timer(10, self.LookForServer).start()
+        gamingThread.join(10)
+        if gamingThread.is_alive():
+            gamingThread.stop()
+        # if gameingThread.is_alive():
+        #     gameingThread.set()
         print("the big  ended!")
 
         try:
@@ -71,9 +74,11 @@ class Client:
             if len(msg) > 0:
                 print(msg)
 
-        except socket.timeout:
-            print('tcp-connection timeout has reached')  # todo delete that print
-            s.close()
+        except OSError:
+            pass
+
+        s.close()
+        self.LookForServer()
 
     def gaming(self, ClientSocket):
         def send_pressed_keys(e):

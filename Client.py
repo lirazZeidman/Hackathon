@@ -3,7 +3,6 @@ import struct
 global stopFunction
 
 
-
 class Client:
     def __init__(self, teamName):
         self.clientIP = socket.gethostbyname(socket.gethostname())
@@ -54,7 +53,7 @@ class Client:
 
         print("time to start the big game!")
         self.startPlaying()
-        print("the big  ended!")
+        print("the big game ended!")
         while True:
             try:
                 msg = self.tcpSocket.recv(1024)
@@ -63,8 +62,8 @@ class Client:
                     print(msg)
                     break
 
-            except OSError:
-                pass
+            except :
+                print("error at printing")
 
         # self.tcpSocket.close()
         try:
@@ -78,18 +77,19 @@ class Client:
     def startPlaying(self):
         global stopFunction
         stopFunction = False
-
-        def send_pressed_keys(e):
-            global stopFunction
-            try:
-                self.tcpSocket.send(bytes(str(e), 'utf-8'))
-            except ConnectionAbortedError:
-
-                stopFunction = True
-
-        keyboard.on_press(send_pressed_keys)
-        if not stopFunction:
-            keyboard.wait()
+        print("playing....")
+        self.tcpSocket.send(bytes("playinggg---! XD", 'utf-8'))
+        # def send_pressed_keys(e):
+        #     global stopFunction
+        #     try:
+        #         self.tcpSocket.send(bytes(str(e), 'utf-8'))
+        #     except ConnectionAbortedError:
+        #
+        #         stopFunction = True
+        #
+        # keyboard.on_press(send_pressed_keys)
+        # if not stopFunction:
+        #     keyboard.wait()
 
 
 if __name__ == '__main__':

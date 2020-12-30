@@ -12,6 +12,8 @@ class Server:
         self.BroadcastUdpPort = 13117
         self.TcpPort = 50000
         self.bufferSize = 1024
+        self.msg = f'Server started, listening on IP address {self.ServerIp}'
+        self.UDPServerSocket = None
 
         self.clients = {}
         self.group1 = {}
@@ -23,18 +25,18 @@ class Server:
     def createUDPSocket(self):
         # Create a datagram socket
 
-        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
         # UDPServerSocket.setTimeout(10)
         # Bind to address and ip
-        UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
-        UDPServerSocket.settimeout(10)
-        print(f'Server started, listening on IP address {self.ServerIp}')
+        self.UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
+        self.UDPServerSocket.settimeout(10)
+        print(self.msg)
         # print("  UDPServerSocket.gettimeout(): ",UDPServerSocket.gettimeout())
         # print("in   ", time.time())
 
         # Send offers
-        offersThread = Thread(target=self.sendOffers, args=(UDPServerSocket,))
+        offersThread = Thread(target=self.sendOffers, args=(self.UDPServerSocket,))
         offersThread.start()
 
         # Listen for incoming datagrams
@@ -62,7 +64,6 @@ class Server:
                 break
 
     def replyToMessages(self, MaxTime):
-
 
         stopped = False
         while not stopped:
@@ -153,8 +154,11 @@ class Server:
         self.group2 = {}
         self.scoreGroup1 = {}
         self.scoreGroup2 = {}
-        print("Game over, sending out offer requests...")
-        self.createUDPSocket()
+
+        self.UDPServerSocket.shutdown(socket.SHUT_RDWR)
+        self.UDPServerSocket.close()
+        self.msg = "Game over, sending out offer requests..."
+        # self.createUDPSocket()
 
     def handleGameThread_1(self, adder, conn, timeToEnd):
 

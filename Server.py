@@ -2,18 +2,76 @@ import socket
 import struct
 import time
 from threading import Thread
-
 from StopableThread import StoppableThread
+
+
+# :*********** For Running on Linux ************:
+# from scapy.arch import get_if_addr
+
+class bcolors:
+    ResetAll = "\033[0m"
+
+    Bold = "\033[1m"
+    Dim = "\033[2m"
+    Underlined = "\033[4m"
+    Blink = "\033[5m"
+    Reverse = "\033[7m"
+    Hidden = "\033[8m"
+
+    ResetBold = "\033[21m"
+    ResetDim = "\033[22m"
+    ResetUnderlined = "\033[24m"
+    ResetBlink = "\033[25m"
+    ResetReverse = "\033[27m"
+    ResetHidden = "\033[28m"
+
+    Default = "\033[39m"
+    Black = "\033[30m"
+    Red = "\033[31m"
+    Green = "\033[32m"
+    Yellow = "\033[33m"
+    Blue = "\033[34m"
+    Magenta = "\033[35m"
+    Cyan = "\033[36m"
+    LightGray = "\033[37m"
+    DarkGray = "\033[90m"
+    LightRed = "\033[91m"
+    LightGreen = "\033[92m"
+    LightYellow = "\033[93m"
+    LightBlue = "\033[94m"
+    LightMagenta = "\033[95m"
+    LightCyan = "\033[96m"
+    White = "\033[97m"
+
+    BackgroundDefault = "\033[49m"
+    BackgroundBlack = "\033[40m"
+    BackgroundRed = "\033[41m"
+    BackgroundGreen = "\033[42m"
+    BackgroundYellow = "\033[43m"
+    BackgroundBlue = "\033[44m"
+    BackgroundMagenta = "\033[45m"
+    BackgroundCyan = "\033[46m"
+    BackgroundLightGray = "\033[47m"
+    BackgroundDarkGray = "\033[100m"
+    BackgroundLightRed = "\033[101m"
+    BackgroundLightGreen = "\033[102m"
+    BackgroundLightYellow = "\033[103m"
+    BackgroundLightBlue = "\033[104m"
+    BackgroundLightMagenta = "\033[105m"
+    BackgroundLightCyan = "\033[106m"
+    BackgroundWhite = "\033[107m"
 
 
 class Server:
 
     def __init__(self):
         self.ServerIp = socket.gethostbyname(socket.gethostname())
+        # self.ServerIp = '127.0.0.1'
+        # self.ServerIp = get_if_addr('eth1')
         self.BroadcastUdpPort = 13117
         self.TcpPort = 50000
         self.bufferSize = 1024
-        self.msg = f'Server started, listening on IP address {self.ServerIp}'
+        self.msg = f'{bcolors.Cyan}Server started, listening on IP address {self.ServerIp}{bcolors.ResetAll}'
         self.UDPServerSocket = None
 
         self.clients = {}
@@ -27,7 +85,6 @@ class Server:
         # Create a datagram socket
 
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
         # UDPServerSocket.setTimeout(10)
         # Bind to address and ip
         self.UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
@@ -54,7 +111,10 @@ class Server:
         counter = 0
         while True:
             if counter < 10:
-                msg = struct.pack('IbH', 0xfeedbeef, 0x2, self.TcpPort)
+                try:
+                    msg = struct.pack('Ibh!', 0xfeedbeef, 0x2, self.TcpPort)
+                except:
+                    msg = struct.pack('IbH', 0xfeedbeef, 0x2, self.TcpPort)
                 # print(struct.unpack('IbH', msg))
                 dest = ('<broadcast>', self.BroadcastUdpPort)
                 UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -85,7 +145,7 @@ class Server:
                 # connecting clients
                 clientsocket, address = sSocket.accept()
 
-                clientName = clientsocket.recv(1024).decode("utf-8")
+                clientName = clientsocket.recv(self.bufferSize).decode("utf-8")
 
                 self.clients[address] = (clientsocket, clientName)
                 # self.clients[address] = clientsocket  # dict contains: (ip,port)->TCP connection
@@ -97,15 +157,16 @@ class Server:
                 stopped = True
 
     def handleStartGame(self):
-        msg = f'Welcome to Keyboard Spamming Battle Royale.\n' \
-              f'Group 1:\n' \
+        msg = f'{bcolors.Blue}Welcome to Keyboard Spamming Battle Royale.\n{bcolors.ResetAll}' \
+              f'{bcolors.Magenta}Group 1:\n' \
               f'==\n' \
-              f'{self.printGroup1()}\n' \
-              f'Group 2:\n' \
+              f'{self.printGroup1()}{bcolors.ResetAll}\n' \
+              f'{bcolors.Green}Group 2:\n' \
               f'==\n' \
-              f'{self.printGroup2()}\n\n' \
-              f'Start pressing keys on your keyboard as fast as you can!!\n'
+              f'{self.printGroup2()}{bcolors.ResetAll}\n\n' \
+              f'{bcolors.Bold}Start pressing keys on your keyboard as fast as you can!!\n{bcolors.ResetAll}'
         self.handleGameAnnouncements(msg)
+
 
         handleGameThread_1 = None
         handleGameThread_2 = None
@@ -132,17 +193,18 @@ class Server:
 
         Score1 = sum(self.scoreGroup1.values())
         Score2 = sum(self.scoreGroup2.values())
-        msg = f'Game Over!\nGroup 1 typed in {Score1} characters. Group 2 typed in {Score2} characters.\n'
+        msg = f'{bcolors.BackgroundLightGreen}{bcolors.DarkGray}{bcolors.Bold}Game Over!\n{bcolors.ResetAll}{bcolors.Magenta}Group 1 typed in {Score1} characters.{bcolors.ResetAll}{bcolors.Green}Group 2 typed in {Score2} characters.\n{bcolors.ResetAll}'
         winG = ""
         if Score2 > Score1:
-            msg += 'Group 2 wins!\n'
+            msg += f'{bcolors.BackgroundLightCyan}{bcolors.DarkGray}Group 2 wins!\n{bcolors.ResetAll}'
             winG = self.printGroup2()
         if Score2 < Score1:
-            msg += 'Group 1 wins!\n'
+            msg += f'{bcolors.BackgroundLightCyan}{bcolors.DarkGray}Group 1 wins!\n{bcolors.ResetAll}'
             winG = self.printGroup1()
         else:
-            msg += 'It\'s a tie!\n'
+            msg += f'{bcolors.BackgroundLightCyan}{bcolors.DarkGray}It\'s a tie!\n{bcolors.ResetAll}'
         msg += "\nCongratulations to the winners:\n==\n" + winG
+
 
         self.handleGameAnnouncements(msg)
         for c in self.clients.values():
@@ -164,7 +226,7 @@ class Server:
         self.scoreGroup1[adder] = 0
         while time.time() < timeToEnd:
             try:
-                char = conn.recv(1024)
+                char = conn.recv(self.bufferSize)
                 if len(char) > 0:
                     self.scoreGroup1[adder] += 1
             except:
@@ -179,7 +241,7 @@ class Server:
         self.scoreGroup2[adder] = 0
         while time.time() < timeToEnd:
             try:
-                char = conn.recv(1024)
+                char = conn.recv(self.bufferSize)
                 if len(char) > 0:
                     self.scoreGroup2[adder] += 1
             except:

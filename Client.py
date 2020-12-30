@@ -2,7 +2,14 @@ import socket
 import struct
 import time
 
+# :*********** For Running on Windows ************:
 from pynput import keyboard
+
+# :*********** For Running on Linux ************:
+# import sys
+# import termios
+# import tty
+
 
 
 class Client:
@@ -27,9 +34,13 @@ class Client:
             self.UDPClientSocket.bind(('', self.clientUdpPort))
 
             try:
-                offer, (self.serverIP, server_port) = self.UDPClientSocket.recvfrom(1024)
+                offer, (self.serverIP, server_port) = self.UDPClientSocket.recvfrom(self.bufferSize)
                 # (b'\xef\xbe\xed\xfe\x02\x00P\xc3', ('192.168.56.1', 13117))
-                offer = struct.unpack('IbH', offer)
+                try:
+                    offer = struct.unpack('IbH', offer)
+                except struct.error:
+                    offer = struct.unpack('Ibh!', offer)
+
 
                 if (offer[0], offer[1]) == (4276993775, 2):
                     self.serverPort = offer[2]
@@ -57,7 +68,7 @@ class Client:
         self.startPlaying(self.tcpSocket)
         while True:
             try:
-                msg = self.tcpSocket.recv(1024)
+                msg = self.tcpSocket.recv(self.bufferSize)
                 msg = msg.decode("utf-8")
                 if len(msg) > 0:
                     print(msg)
@@ -79,6 +90,7 @@ class Client:
             self.UDPClientSocket.close()
             self.LookForServer()
 
+    # :*********** For Running on Windows ************:
     def startPlaying(self, socket_tcp):
         timeout = time.time() + 10
 
@@ -98,6 +110,18 @@ class Client:
         listener = keyboard.Listener(on_press=on_press, on_release=on_release)
         listener.start()
         listener.join()
+
+    # :*********** For Running on Linux ************:
+    # def startPlaying(self, socket_tcp):
+    #     timeout = time.time() + 10
+    #     orig_settings = termios.tcgetattr(sys.stdin)
+    #     tty.setcbreak(sys.stdin)
+    #     x = 0
+    #     while time.time() < timeout:
+    #         x = sys.stdin.read(1)[0]
+    #         socket_tcp.send(bytes(str(x), 'utf-8'))
+    #
+    #     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, orig_settings)
 
 
 if __name__ == '__main__':

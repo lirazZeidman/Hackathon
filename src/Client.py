@@ -1,7 +1,9 @@
 import socket
 import struct
-import time
 import keyboard
+import time
+from threading import Thread
+
 
 class Client:
     def __init__(self, teamName):
@@ -38,7 +40,8 @@ class Client:
                     self.createTcpConnection()
                     break
             except socket.timeout:  # todo delete the except
-                print('timeout reached, LookForServer')
+                pass
+                # print('timeout reached, LookForServer')
 
     def createTcpConnection(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,17 +54,34 @@ class Client:
             if len(msg) > 0:
                 print(msg)
 
-
         except socket.timeout:
             print('tcp-connection timeout has reached')  # todo delete that print
             s.close()
 
         print("time to start the big game!")
-        self.gaming(s)
+        gameingThread = Thread(target=self.gaming, args=(s,))
+        gameingThread.start()
 
-    def gaming(self,ClientSocket):
-        try1 = keyboard.read_key(True)
-        ClientSocket.send(str.encode(try1))
+        gameingThread.join(10)
+        print("the big  ended!")
+
+        try:
+            msg = s.recv(1024)
+            msg = msg.decode("utf-8")
+            if len(msg) > 0:
+                print(msg)
+
+        except socket.timeout:
+            print('tcp-connection timeout has reached')  # todo delete that print
+            s.close()
+
+    def gaming(self, ClientSocket):
+        def send_pressed_keys(e):
+            ClientSocket.send(bytes(str(e), 'utf-8'))
+
+        keyboard.on_press(send_pressed_keys)
+        keyboard.wait()
+
 
 def startClients(name):
     client1 = Client(name)

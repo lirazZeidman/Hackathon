@@ -2,6 +2,7 @@ import socket
 import struct
 import time
 from threading import Thread
+
 from StopableThread import StoppableThread
 
 
@@ -79,7 +80,7 @@ class Server:
                 # binding socket
                 # s.bind((socket.gethostname(), self.TcpPort))
                 sSocket.bind(('0.0.0.0', self.TcpPort))
-                sSocket.listen(1)
+                sSocket.listen()
 
                 # connecting clients
                 clientsocket, address = sSocket.accept()
@@ -96,13 +97,14 @@ class Server:
                 stopped = True
 
     def handleStartGame(self):
-        msg = f'Welcome to Keyboard Spamming Battle Royal.\n' \
+        msg = f'Welcome to Keyboard Spamming Battle Royale.\n' \
               f'Group 1:\n' \
               f'==\n' \
               f'{self.printGroup1()}\n' \
               f'Group 2:\n' \
               f'==\n' \
-              f'{self.printGroup2()}\n'
+              f'{self.printGroup2()}\n\n' \
+              f'Start pressing keys on your keyboard as fast as you can!!\n'
         self.handleGameAnnouncements(msg)
 
         handleGameThread_1 = None
@@ -123,14 +125,10 @@ class Server:
 
         time_left = timeoutOfGame - time.time()
         if handleGameThread_1 is not None:
-            print('im before join')
             handleGameThread_1.join(time_left)
-            print('im After join')
 
         if handleGameThread_2 is not None:
-            print('im before join')
             handleGameThread_2.join(time_left)
-            print('im After join')
 
         Score1 = sum(self.scoreGroup1.values())
         Score2 = sum(self.scoreGroup2.values())
@@ -144,7 +142,7 @@ class Server:
             winG = self.printGroup1()
         else:
             msg += 'It\'s a tie!\n'
-        msg += "Congratulations to the winners:\n==\n" + winG
+        msg += "\nCongratulations to the winners:\n==\n" + winG
 
         self.handleGameAnnouncements(msg)
         for c in self.clients.values():
@@ -226,5 +224,3 @@ if __name__ == '__main__':
         # server.handleGameAnnouncement()
         if len(server.clients.keys()) > 0:
             server.handleStartGame()
-        else:
-            break

@@ -64,6 +64,7 @@ class Client:
         gamingThread.join(10)
         if gamingThread.is_alive():
             gamingThread.stop()
+
         # if gameingThread.is_alive():
         #     gameingThread.set()
         print("the big  ended!")
@@ -73,12 +74,11 @@ class Client:
             msg = msg.decode("utf-8")
             if len(msg) > 0:
                 print(msg)
-
         except OSError:
             pass
 
-        s.close()
-        self.LookForServer()
+        # s.close()
+        # self.LookForServer()
 
     def gaming(self, ClientSocket):
         def send_pressed_keys(e):

@@ -13,8 +13,6 @@ class Server:
         self.TcpPort = 50000
         self.bufferSize = 1024
 
-        msgFromServer = "Hello UDP Client"
-        self.bytesToSend = str.encode(msgFromServer)
         self.clients = {}
         self.group1 = {}
         self.group2 = {}
@@ -30,8 +28,9 @@ class Server:
         # UDPServerSocket.setTimeout(10)
         # Bind to address and ip
         UDPServerSocket.bind((self.ServerIp, self.BroadcastUdpPort))
+        UDPServerSocket.settimeout(10)
         print(f'Server started, listening on IP address {self.ServerIp}')
-
+        # print("  UDPServerSocket.gettimeout(): ",UDPServerSocket.gettimeout())
         # print("in   ", time.time())
 
         # Send offers
@@ -39,7 +38,7 @@ class Server:
         offersThread.start()
 
         # Listen for incoming datagrams
-        replyThread = Thread(target=self.replyToMessages, args=())
+        replyThread = Thread(target=self.replyToMessages, args=(time.time() + 10,))
         replyThread.start()
 
         # Wait for at most 10 seconds for the thread to complete.
@@ -62,7 +61,7 @@ class Server:
             else:
                 break
 
-    def replyToMessages(self):
+    def replyToMessages(self, MaxTime):
         for c in self.clients.values():
             c[0].close()
         self.clients = {}
@@ -75,7 +74,10 @@ class Server:
                 # creating socket
                 sSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sSocket.settimeout(10)
+                if MaxTime - time.time() < 0:
+                    break
+
+                sSocket.settimeout(int(MaxTime - time.time()))
 
                 # binding socket
                 # s.bind((socket.gethostname(), self.TcpPort))
@@ -120,13 +122,11 @@ class Server:
                                                      args=(adder, conn))
                 handleGameThread_2.start()
         if handleGameThread_1 is not None:
-            time.sleep(timeoutOfGame - time.time())
-            handleGameThread_1.stop()
-            handleGameThread_1.join()
+            # handleGameThread_1.stop()
+            handleGameThread_1.join(10)
         if handleGameThread_2 is not None and timeoutOfGame < time.time():
-            time.sleep(timeoutOfGame - time.time())
-            handleGameThread_2.stop()
-            handleGameThread_2.join()
+            # handleGameThread_2.stop()
+            handleGameThread_2.join(10)
 
         Score1 = sum(self.scoreGroup1.values())
         Score2 = sum(self.scoreGroup2.values())
@@ -148,6 +148,7 @@ class Server:
     def handleGameThread_1(self, adder, conn):
         self.scoreGroup1[adder] = 0
         while True:
+
             char = conn.recv(1024)
             if len(char) > 0:
                 self.scoreGroup1[adder] += 1

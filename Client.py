@@ -1,8 +1,7 @@
 import socket
 import struct
-import keyboard
-import time
-from StopableThread import StoppableThread
+global stopFunction
+
 
 
 class Client:
@@ -14,17 +13,12 @@ class Client:
         self.serverIP = None
         self.serverPort = None
         self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        print('Client started, listening for offer requests...')
-
-        msgFromClient = "Hello UDP Server"
-        self.bytesToSend = str.encode(msgFromClient)
+        self.msg = 'Client started, listening for offer requests...'
 
     def LookForServer(self):
-        # serverAddressPort = ("127.0.0.1", 20001)
 
         # Create a UDP socket at client side
-        timeout = time.time() + 10
+        print(self.msg)
         while True:
             UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             UDPClientSocket.settimeout(10)
@@ -48,6 +42,7 @@ class Client:
         # self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcpSocket.connect((self.serverIP, self.serverPort))
         self.tcpSocket.send(bytes(f'{self.teamName}', 'utf-8'))
+
         try:
             msg = self.tcpSocket.recv(1024)
             msg = msg.decode("utf-8")
@@ -59,49 +54,44 @@ class Client:
 
         print("time to start the big game!")
         self.startPlaying()
-
-        # gamingThread = StoppableThread(target=self.gaming, args=(s,))
-        # gamingThread.start()
-
-        # Thread.Timer(10, self.LookForServer).start()
-        # gamingThread.join(10)
-
-        # if gamingThread.is_alive():
-        #     gamingThread.stop()
-        # if gameingThread.is_alive():
-        #     gameingThread.set()
         print("the big  ended!")
+        while True:
+            try:
+                msg = self.tcpSocket.recv(1024)
+                msg = msg.decode("utf-8")
+                if len(msg) > 0:
+                    print(msg)
+                    break
 
+            except OSError:
+                pass
+
+        # self.tcpSocket.close()
         try:
-            msg = self.tcpSocket.recv(1024)
-            msg = msg.decode("utf-8")
-            if len(msg) > 0:
-                print(msg)
-
-        except OSError:
-            pass
-
-        self.tcpSocket.close()
-        self.LookForServer()
+            self.tcpSocket.send(bytes('check', 'utf-8'))
+        except:
+            self.msg = 'Server disconnected, listening for offer requests...'
+            global stopFunction
+            stopFunction = False
+            self.LookForServer()
 
     def startPlaying(self):
+        global stopFunction
+        stopFunction = False
+
         def send_pressed_keys(e):
-            self.tcpSocket.send(bytes(str(e), 'utf-8'))
+            global stopFunction
+            try:
+                self.tcpSocket.send(bytes(str(e), 'utf-8'))
+            except ConnectionAbortedError:
 
-        while self.tcpSocket:
-            keyboard.on_press(send_pressed_keys)
+                stopFunction = True
+
+        keyboard.on_press(send_pressed_keys)
+        if not stopFunction:
             keyboard.wait()
-
-        try:
-            msg = self.tcpSocket.recv(1024)
-            msg = msg.decode("utf-8")
-            if len(msg) > 0:
-                print(msg)
-
-        except OSError:
-            pass
 
 
 if __name__ == '__main__':
-    client = Client("Rob0tSoF1A")
+    client = Client("QueenGambit")
     client.LookForServer()

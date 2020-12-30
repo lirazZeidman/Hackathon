@@ -62,11 +62,7 @@ class Server:
                 break
 
     def replyToMessages(self, MaxTime):
-        for c in self.clients.values():
-            c[0].close()
-        self.clients = {}
-        self.group1 = {}
-        self.group2 = {}
+
 
         stopped = False
         while not stopped:
@@ -150,15 +146,17 @@ class Server:
         msg += "Congratulations to the winners:\n==\n" + winG
 
         self.handleGameAnnouncements(msg)
-        print("Score1: ", Score1, " Score2: ", Score2)
+        for c in self.clients.values():
+            c[0].close()
+        self.clients = {}
+        self.group1 = {}
+        self.group2 = {}
+        self.scoreGroup1 = {}
+        self.scoreGroup2 = {}
+        print("Game over, sending out offer requests...")
+        self.createUDPSocket()
 
     def handleGameThread_1(self, adder, conn, timeToEnd):
-
-        # r, _, _ = select.select([conn], [], [])
-        # if r:
-        #     # ready to receive
-        #     message = conn.recv(1024)
-        #     #TODO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 
         conn.setblocking(0)
         self.scoreGroup1[adder] = 0
@@ -179,9 +177,7 @@ class Server:
         self.scoreGroup2[adder] = 0
         while time.time() < timeToEnd:
             try:
-                # conn.settimeout(0.1)
                 char = conn.recv(1024)
-                # conn.settimeout(0.1)
                 if len(char) > 0:
                     self.scoreGroup2[adder] += 1
             except:

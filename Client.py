@@ -13,6 +13,7 @@ class Client:
         self.bufferSize = 1024
         self.serverIP = None
         self.serverPort = None
+        self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         print('Client started, listening for offer requests...')
 
@@ -44,53 +45,61 @@ class Client:
                 # print('timeout reached, LookForServer')
 
     def createTcpConnection(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.serverIP, self.serverPort))
-        s.send(bytes(f'{self.teamName}', 'utf-8'))
-
+        # self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcpSocket.connect((self.serverIP, self.serverPort))
+        self.tcpSocket.send(bytes(f'{self.teamName}', 'utf-8'))
         try:
-            msg = s.recv(1024)
+            msg = self.tcpSocket.recv(1024)
             msg = msg.decode("utf-8")
             if len(msg) > 0:
                 print(msg)
 
         except socket.timeout:
-            s.close()
+            self.tcpSocket.close()
 
         print("time to start the big game!")
-        gamingThread = StoppableThread(target=self.gaming, args=(s,))
-        gamingThread.start()
-        # Thread.Timer(10, self.LookForServer).start()
-        gamingThread.join(10)
-        if gamingThread.is_alive():
-            gamingThread.stop()
+        self.startPlaying()
 
+        # gamingThread = StoppableThread(target=self.gaming, args=(s,))
+        # gamingThread.start()
+
+        # Thread.Timer(10, self.LookForServer).start()
+        # gamingThread.join(10)
+
+        # if gamingThread.is_alive():
+        #     gamingThread.stop()
         # if gameingThread.is_alive():
         #     gameingThread.set()
         print("the big  ended!")
 
         try:
-            msg = s.recv(1024)
+            msg = self.tcpSocket.recv(1024)
             msg = msg.decode("utf-8")
             if len(msg) > 0:
                 print(msg)
+
         except OSError:
             pass
 
-        # s.close()
-        # self.LookForServer()
+        self.tcpSocket.close()
+        self.LookForServer()
 
-    def gaming(self, ClientSocket):
+    def startPlaying(self):
         def send_pressed_keys(e):
-            ClientSocket.send(bytes(str(e), 'utf-8'))
+            self.tcpSocket.send(bytes(str(e), 'utf-8'))
 
-        keyboard.on_press(send_pressed_keys)
-        keyboard.wait()
+        while self.tcpSocket:
+            keyboard.on_press(send_pressed_keys)
+            keyboard.wait()
 
+        try:
+            msg = self.tcpSocket.recv(1024)
+            msg = msg.decode("utf-8")
+            if len(msg) > 0:
+                print(msg)
 
-def startClients(name):
-    client1 = Client(name)
-    client1.LookForServer()
+        except OSError:
+            pass
 
 
 if __name__ == '__main__':

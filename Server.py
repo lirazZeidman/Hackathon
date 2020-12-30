@@ -1,7 +1,7 @@
 import socket
-from threading import Thread
 import struct
 import time
+from threading import Thread
 from StopableThread import StoppableThread
 
 
@@ -113,20 +113,27 @@ class Server:
 
         timeoutOfGame = time.time() + 10
         for adder, (conn, name) in self.clients.items():
+
             if adder in self.group1.keys():
                 handleGameThread_1 = StoppableThread(target=self.handleGameThread_1,
-                                                     args=(adder, conn))
+                                                     args=(adder, conn, timeoutOfGame))
                 handleGameThread_1.start()
+
             if adder in self.group2.keys():
                 handleGameThread_2 = StoppableThread(target=self.handleGameThread_2,
-                                                     args=(adder, conn))
+                                                     args=(adder, conn, timeoutOfGame))
                 handleGameThread_2.start()
+
+        time_left = timeoutOfGame - time.time()
         if handleGameThread_1 is not None:
-            # handleGameThread_1.stop()
-            handleGameThread_1.join(10)
-        if handleGameThread_2 is not None and timeoutOfGame < time.time():
-            # handleGameThread_2.stop()
-            handleGameThread_2.join(10)
+            print('im before join')
+            handleGameThread_1.join(time_left)
+            print('im After join')
+
+        if handleGameThread_2 is not None:
+            print('im before join')
+            handleGameThread_2.join(time_left)
+            print('im After join')
 
         Score1 = sum(self.scoreGroup1.values())
         Score2 = sum(self.scoreGroup2.values())
@@ -145,20 +152,43 @@ class Server:
         self.handleGameAnnouncements(msg)
         print("Score1: ", Score1, " Score2: ", Score2)
 
-    def handleGameThread_1(self, adder, conn):
+    def handleGameThread_1(self, adder, conn, timeToEnd):
+
+        # r, _, _ = select.select([conn], [], [])
+        # if r:
+        #     # ready to receive
+        #     message = conn.recv(1024)
+        #     #TODO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+
+        conn.setblocking(0)
         self.scoreGroup1[adder] = 0
-        while True:
+        while time.time() < timeToEnd:
+            try:
+                char = conn.recv(1024)
+                if len(char) > 0:
+                    self.scoreGroup1[adder] += 1
+            except:
+                if time.time() < timeToEnd:
+                    continue
+                else:
+                    break
 
-            char = conn.recv(1024)
-            if len(char) > 0:
-                self.scoreGroup1[adder] += 1
+    def handleGameThread_2(self, adder, conn, timeToEnd):
 
-    def handleGameThread_2(self, adder, conn):
+        conn.setblocking(0)
         self.scoreGroup2[adder] = 0
-        while True:
-            char = conn.recv(1024)
-            if len(char) > 0:
-                self.scoreGroup2[adder] += 1
+        while time.time() < timeToEnd:
+            try:
+                # conn.settimeout(0.1)
+                char = conn.recv(1024)
+                # conn.settimeout(0.1)
+                if len(char) > 0:
+                    self.scoreGroup2[adder] += 1
+            except:
+                if time.time() < timeToEnd:
+                    continue
+                else:
+                    break
 
     def printGroup1(self):
         g1 = ""

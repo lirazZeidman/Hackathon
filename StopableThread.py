@@ -13,9 +13,5 @@ class StoppableThread(threading.Thread):
     def stop(self):
         self._stop_event.set()
 
-    def stopAfter(self, seconds):
-        time.sleep(seconds)
-        self._stop_event.set()
-
     def stopped(self):
         return self._stop_event.is_set()
